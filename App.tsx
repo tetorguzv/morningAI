@@ -10,6 +10,7 @@ import LoginPage from './components/LoginPage';
 import SignUpPage from './components/SignUpPage';
 import Dashboard from './components/Dashboard';
 import Navbar from './components/Navbar';
+import IntroductionScreen from './components/IntroductionScreen';
 
 
 const App: React.FC = () => {
@@ -17,7 +18,7 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authView, setAuthView] = useState<AuthView>('login');
   
-  const [appState, setAppState] = useState<AppState>('dashboard');
+  const [appState, setAppState] = useState<AppState>('introduction');
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +39,7 @@ const App: React.FC = () => {
     setIsAuthenticated(false);
     setCurrentUser(null);
     setAuthView('login');
-    setAppState('dashboard'); // Reset app state
+    setAppState('introduction'); 
   }, []);
 
   const handleCapture = useCallback(async (image: string) => {
@@ -71,8 +72,16 @@ const App: React.FC = () => {
   const handleStartAnalysis = useCallback(() => {
     setAppState('initial');
   }, []);
+  
+  const handleGetStarted = useCallback(() => {
+    setAppState('dashboard');
+  }, []);
 
   const renderContent = () => {
+    if (appState === 'introduction') {
+      return <IntroductionScreen onGetStarted={handleGetStarted} />;
+    }
+
     if (!isAuthenticated) {
       switch (authView) {
         case 'login':
@@ -106,11 +115,13 @@ const App: React.FC = () => {
     }
   };
 
+  const showNavbar = appState !== 'introduction';
+
   return (
     <div className="min-h-screen bg-black text-gray-200 flex flex-col font-sans">
-      <Navbar isAuthenticated={isAuthenticated} onLogout={handleLogout} onLogoClick={handleBackToDashboard} />
+      {showNavbar && <Navbar isAuthenticated={isAuthenticated} onLogout={handleLogout} onLogoClick={handleBackToDashboard} />}
       <main className="flex-grow flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-5xl mx-auto">
+        <div className="w-full max-w-7xl mx-auto">
             {renderContent()}
         </div>
       </main>

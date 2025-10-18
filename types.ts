@@ -16,5 +16,5 @@ export interface User {
   email: string;
 }
 
-export type AppState = 'dashboard' | 'initial' | 'capturing' | 'analyzing' | 'results' | 'error';
+export type AppState = 'introduction' | 'dashboard' | 'initial' | 'capturing' | 'analyzing' | 'results' | 'error';
 export type AuthView = 'login' | 'signup';

@@ -42,7 +42,8 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({ analysis, imageSrc, o
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1 flex flex-col items-center">
           <h2 className="text-2xl font-bold text-white mb-4 text-center">Your Morning Snapshot</h2>
-          <img src={imageSrc} alt="Your captured" className="rounded-lg shadow-lg w-full max-w-sm object-cover transform scale-x-[-1] border-2 border-gray-700" />
+          {/* Fix: Removed horizontal flip to display the image consistently with the capture preview. */}
+          <img src={imageSrc} alt="Your captured" className="rounded-lg shadow-lg w-full max-w-sm object-cover border-2 border-gray-700" />
           <p className="text-gray-300 mt-6 text-center text-lg font-medium">{overallSummary}</p>
           <button
             onClick={onReset}
