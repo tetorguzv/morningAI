@@ -11,7 +11,6 @@ declare const faceapi: any;
 const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  // Fix: Provide initial value to useRef to resolve "Expected 1 arguments, but got 0" error.
   const detectionInterval = useRef<number | undefined>(undefined);
 
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -19,16 +18,18 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture }) => {
   const [modelsLoaded, setModelsLoaded] = useState(false);
 
   const startFaceDetection = useCallback(() => {
+    if (detectionInterval.current) {
+        clearInterval(detectionInterval.current);
+    }
+
     detectionInterval.current = window.setInterval(async () => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
 
-      if (video && canvas && !video.paused && !video.ended) {
-        // Set canvas dimensions to match the video element
+      if (video && canvas && !video.paused && !video.ended && video.readyState > 2) {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
 
-        // Detect face with landmarks
         const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
         const resizedDetections = faceapi.resizeResults(detections, { width: video.videoWidth, height: video.videoHeight });
         
@@ -37,15 +38,11 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture }) => {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
 
           if (resizedDetections && resizedDetections.length > 0) {
-            // Because the video is flipped horizontally via CSS, we must also flip the canvas context
             ctx.save();
             ctx.scale(-1, 1);
             ctx.translate(-canvas.width, 0);
 
-            // Draw the green bounding box
             faceapi.draw.drawDetections(canvas, resizedDetections.map(d => d.detection), { boxColor: 'rgba(0, 255, 0, 0.7)' });
-            
-            // Draw the green facial landmarks
             faceapi.draw.drawFaceLandmarks(canvas, resizedDetections.map(d => d.landmarks), {
                 drawLines: true,
                 lineColor: 'rgba(0, 255, 0, 0.7)',
@@ -53,60 +50,76 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture }) => {
                 pointSize: 2
             });
 
-            // Restore the context to its original state
             ctx.restore();
           }
         }
       }
-    }, 100); // Run detection every 100ms
+    }, 100);
   }, []);
 
-  const loadModels = useCallback(async () => {
-    const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
-    try {
-      await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-      ]);
-      setModelsLoaded(true);
-      startFaceDetection();
-    } catch (e) {
-      console.error("Error loading face-api models:", e);
-      setError("Could not load AI models for face tracking. Please try refreshing the page.");
-    }
-  }, [startFaceDetection]);
 
-  const startCamera = useCallback(async () => {
-    try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-            video: { 
-                width: { ideal: 1280 }, 
-                height: { ideal: 720 },
-                facingMode: 'user' 
-            } 
+  useEffect(() => {
+    let localStream: MediaStream | null = null;
+    
+    const loadAndStart = async () => {
+      const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+      try {
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+        ]);
+        setModelsLoaded(true);
+
+        localStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            width: { ideal: 1280 }, 
+            height: { ideal: 720 },
+            facingMode: 'user' 
+          } 
         });
+        
         if (videoRef.current) {
-            videoRef.current.srcObject = mediaStream;
+          videoRef.current.srcObject = localStream;
         }
-        setStream(mediaStream);
-    } catch (err) {
-        console.error("Error accessing webcam:", err);
-        setError("Could not access the camera. Please check permissions and try again.");
-    }
+        setStream(localStream); // Set state for UI logic
+      } catch (e) {
+        console.error("Setup error:", e);
+        if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+          setError("Could not access the camera. Please check permissions and try again.");
+        } else {
+          setError("Could not load models or start camera. Please try refreshing the page.");
+        }
+      }
+    };
+    
+    loadAndStart();
+    
+    return () => {
+      if (detectionInterval.current) {
+        clearInterval(detectionInterval.current);
+      }
+      localStream?.getTracks().forEach(track => track.stop());
+    };
   }, []);
 
   useEffect(() => {
-    startCamera();
-    loadModels();
-    
-    return () => {
-      // Cleanup on component unmount
-      clearInterval(detectionInterval.current);
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+    const videoElement = videoRef.current;
+    if (modelsLoaded && videoElement) {
+      const onPlay = () => {
+        startFaceDetection();
+      };
+      
+      videoElement.addEventListener('play', onPlay);
+      
+      if (!videoElement.paused) {
+        onPlay();
       }
-    };
-  }, [startCamera, loadModels, stream]);
+      
+      return () => {
+        videoElement.removeEventListener('play', onPlay);
+      };
+    }
+  }, [modelsLoaded, startFaceDetection]);
 
   const handleCapture = () => {
     const video = videoRef.current;
@@ -132,9 +145,9 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture }) => {
   if (error) {
     return (
         <div className="bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl p-8 text-center flex flex-col items-center">
-            <h2 className="text-xl font-semibold text-red-500 mb-4">Camera Error</h2>
+            <h2 className="text-xl font-semibold text-red-500 mb-4">Setup Error</h2>
             <p className="text-gray-400 mb-6">{error}</p>
-            <button onClick={startCamera} style={{ backgroundColor: '#1E90FF' }} className="px-6 py-2 text-white font-semibold rounded-full shadow-md hover:opacity-90 transition">
+            <button onClick={() => window.location.reload()} style={{ backgroundColor: '#1E90FF' }} className="px-6 py-2 text-white font-semibold rounded-full shadow-md hover:opacity-90 transition">
                 Retry
             </button>
         </div>
