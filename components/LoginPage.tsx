@@ -7,6 +7,37 @@ interface LoginPageProps {
   onSwitchToSignUp: () => void;
 }
 
+const allowedDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'icloud.com'];
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+const validateEmail = (email: string): { isValid: boolean; message: string } => {
+  if (!email.trim()) {
+      return { isValid: false, message: 'Email cannot be empty.' };
+  }
+
+  // Basic Syntax, Character & Format Rules
+  if (!emailRegex.test(email)) {
+    return {
+      isValid: false,
+      message: 'Please enter a valid email format (e.g., user@example.com). No spaces allowed.',
+    };
+  }
+
+  // Domain Whitelisting
+  const domain = email.split('@')[1];
+  if (!allowedDomains.includes(domain.toLowerCase())) {
+    return {
+      isValid: false,
+      message: 'Sorry, only emails from Gmail, Yahoo, Outlook, and iCloud are currently accepted.',
+    };
+  }
+  
+  // Note: MX Record Check is a server-side operation and cannot be reliably implemented in a frontend-only application.
+
+  return { isValid: true, message: '' };
+};
+
+
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSwitchToSignUp }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -15,15 +46,18 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSwitchToSignUp }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      setError(emailValidation.message);
+      return;
+    }
+
+    if (!password) {
       setError('Please fill in all fields.');
       return;
     }
-    // Basic email validation
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      setError('Please enter a valid email address.');
-      return;
-    }
+    
     setError('');
     // Simulate login
     onLogin({ name: email.split('@')[0], email });
