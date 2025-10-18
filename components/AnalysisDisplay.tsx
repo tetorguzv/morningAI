@@ -162,15 +162,15 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({ analysis, imageSrc, o
           <h2 className="text-2xl font-bold text-white mb-6 text-center lg:text-left">Your Personalized Radiance Plan</h2>
           
           <div className="border-b border-gray-700">
-            <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+            <nav className="-mb-px flex" aria-label="Tabs">
               {analysisCategories.map(category => (
                 <button
                   key={category.id}
                   onClick={() => setActiveTab(category.id)}
-                  className={`whitespace-nowrap flex items-center py-3 px-1 border-b-2 font-medium text-sm transition-colors focus:outline-none ${
+                  className={`flex-1 justify-center whitespace-nowrap flex items-center py-3 px-1 border-b-2 font-medium text-sm transition-colors focus:outline-none ${
                     activeTab === category.id
                       ? 'border-blue-500 text-white'
-                      : 'border-transparent text-gray-400 hover:text-white'
+                      : 'border-transparent text-gray-400 hover:text-white hover:border-gray-500'
                   }`}
                 >
                   {React.cloneElement(category.icon, { className: 'w-5 h-5 mr-2' })}
