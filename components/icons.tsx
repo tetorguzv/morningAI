@@ -61,3 +61,16 @@ export const EyeOffIcon: React.FC<IconProps> = ({ className }) => (
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a10.05 10.05 0 013.558-5.225m5.922-1.936A10.042 10.042 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.05 10.05 0 01-1.318 3.325M9.42 9.42a3 3 0 114.243 4.243m-4.243-4.243L5.175 5.175m13.65 13.65l-4.242-4.242" />
     </svg>
 );
+
+export const BrainIcon: React.FC<IconProps> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 01-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 013.09-3.09L12 5.25l2.846.813a4.5 4.5 0 013.09 3.09L21.75 12l-2.846.813a4.5 4.5 0 01-3.09 3.09z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 12v.01M4.5 12H3m1.5 0c0-1.04.195-2.043.558-3M6.75 6.75A6.375 6.375 0 0112 4.5m8.25 7.5h1.5M16.5 12c0 1.04-.195 2.043-.558 3M17.25 17.25a6.375 6.375 0 01-5.25 2.25m-5.25-2.25c-1.355 0-2.62.4-3.693 1.058" />
+    </svg>
+);
+
+export const LightbulbIcon: React.FC<IconProps> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.311a15.045 15.045 0 01-7.5 0C4.508 17.64 2.25 14.434 2.25 10.5 2.25 6.236 5.736 2.75 10.5 2.75c4.764 0 8.25 3.486 8.25 7.75 0 3.934-2.258 7.14-5.25 8.25z" />
+    </svg>
+);
