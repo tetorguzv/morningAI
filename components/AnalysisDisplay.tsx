@@ -40,34 +40,9 @@ interface AnalysisDisplayProps {
   onReset: () => void;
 }
 
-interface AnalysisCardProps {
-    icon: React.ReactNode;
-    title: string;
-    observation: string;
-    tips: string[];
-}
-
-const AnalysisCard: React.FC<AnalysisCardProps> = ({ icon, title, observation, tips }) => (
-    <div className="bg-gray-800/70 rounded-xl p-6 transition-shadow hover:shadow-lg border border-gray-700 hover:border-gray-600">
-        <div className="flex items-center mb-4">
-            {icon}
-            <h3 className="text-xl font-bold text-white ml-3">{title}</h3>
-        </div>
-        <p className="text-gray-400 mb-4 italic">"{observation}"</p>
-        <ul className="space-y-2">
-            {tips.map((tip, index) => (
-                <li key={index} className="flex items-start">
-                    <CheckCircleIcon className="w-5 h-5 text-blue-400 mr-2 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">{tip}</span>
-                </li>
-            ))}
-        </ul>
-    </div>
-);
-
-
 const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({ analysis, imageSrc, onReset }) => {
   const { overallSummary, swelling, skin, fatigue, stress, voiceSummary } = analysis;
+  const [activeTab, setActiveTab] = useState('swelling');
 
   const [isAudioLoading, setAudioLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -75,10 +50,18 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({ analysis, imageSrc, o
   const audioBufferRef = useRef<AudioBuffer | null>(null);
   const audioSourceRef = useRef<AudioBufferSourceNode | null>(null);
 
+  const analysisCategories = [
+    { id: 'swelling', title: 'Swelling', fullTitle: 'Swelling & Puffiness', icon: <SwellingIcon />, data: swelling },
+    { id: 'skin', title: 'Skin', fullTitle: 'Skin Condition', icon: <SkinIcon />, data: skin },
+    { id: 'fatigue', title: 'Fatigue', fullTitle: 'Signs of Fatigue', icon: <FatigueIcon />, data: fatigue },
+    { id: 'stress', title: 'Stress', fullTitle: 'Signs of Stress', icon: <StressIcon />, data: stress },
+  ];
+  
+  const activeCategory = analysisCategories.find(c => c.id === activeTab);
+
   const stopAudio = () => {
     if (audioSourceRef.current) {
         audioSourceRef.current.stop();
-        // The onended event will handle cleanup and state change
     }
   };
   
@@ -151,7 +134,7 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({ analysis, imageSrc, o
 
   return (
     <div className="bg-gray-900/50 border border-gray-700 backdrop-blur-sm rounded-2xl shadow-2xl p-6 lg:p-8 w-full animate-fade-in">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
         <div className="lg:col-span-1 flex flex-col items-center">
             <div className="flex items-center justify-center mb-4 relative">
                 <h2 className="text-2xl font-bold text-white text-center">Your Morning Snapshot</h2>
@@ -176,32 +159,43 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({ analysis, imageSrc, o
           </button>
         </div>
         <div className="lg:col-span-2">
-          <h2 className="text-2xl font-bold text-white mb-4 text-center lg:text-left">Your Personalized Radiance Plan</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <AnalysisCard 
-              icon={<SwellingIcon className="w-8 h-8 text-blue-400"/>}
-              title="Swelling & Puffiness"
-              observation={swelling.observation}
-              tips={swelling.tips}
-            />
-            <AnalysisCard 
-              icon={<SkinIcon className="w-8 h-8 text-pink-400"/>}
-              title="Skin Condition"
-              observation={skin.observation}
-              tips={skin.tips}
-            />
-            <AnalysisCard 
-              icon={<FatigueIcon className="w-8 h-8 text-purple-400"/>}
-              title="Signs of Fatigue"
-              observation={fatigue.observation}
-              tips={fatigue.tips}
-            />
-            <AnalysisCard 
-              icon={<StressIcon className="w-8 h-8 text-orange-400"/>}
-              title="Signs of Stress"
-              observation={stress.observation}
-              tips={stress.tips}
-            />
+          <h2 className="text-2xl font-bold text-white mb-6 text-center lg:text-left">Your Personalized Radiance Plan</h2>
+          
+          <div className="border-b border-gray-700">
+            <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+              {analysisCategories.map(category => (
+                <button
+                  key={category.id}
+                  onClick={() => setActiveTab(category.id)}
+                  className={`whitespace-nowrap flex items-center py-3 px-1 border-b-2 font-medium text-sm transition-colors focus:outline-none ${
+                    activeTab === category.id
+                      ? 'border-blue-500 text-white'
+                      : 'border-transparent text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {React.cloneElement(category.icon, { className: 'w-5 h-5 mr-2' })}
+                  {category.title}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          <div className="mt-6">
+            {activeCategory && (
+              <div key={activeCategory.id} className="animate-fade-in">
+                 <h3 className="text-xl font-semibold text-white mb-3">{activeCategory.fullTitle}</h3>
+                 <p className="text-gray-400 mb-6 pl-4 border-l-2 border-gray-500 italic">"{activeCategory.data.observation}"</p>
+                
+                 <ul className="space-y-3">
+                  {activeCategory.data.tips.map((tip, index) => (
+                    <li key={index} className="flex items-start">
+                      <CheckCircleIcon className="w-5 h-5 text-blue-400 mr-3 mt-1 flex-shrink-0" />
+                      <span className="text-gray-300 leading-relaxed">{tip}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
       </div>
