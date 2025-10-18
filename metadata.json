@@ -1,0 +1,7 @@
+{
+  "name": "Morning Radiance AI",
+  "description": "Analyzes your face from a webcam photo to identify signs of swelling, skin conditions, fatigue, and stress. Get personalized tips and remedies to start your day right.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
