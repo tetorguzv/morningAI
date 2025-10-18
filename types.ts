@@ -9,6 +9,7 @@ export interface AnalysisResult {
   fatigue: SymptomAnalysis;
   stress: SymptomAnalysis;
   overallSummary: string;
+  voiceSummary: string;
 }
 
 export interface User {

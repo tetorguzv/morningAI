@@ -1,5 +1,5 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { AnalysisResult } from '../types';
 
 const analysisSchema = {
@@ -8,6 +8,10 @@ const analysisSchema = {
     overallSummary: {
       type: Type.STRING,
       description: "A brief, positive, and encouraging overall summary of the morning look, starting with a friendly greeting."
+    },
+    voiceSummary: {
+      type: Type.STRING,
+      description: "A brief, friendly, and encouraging summary of the key findings and top 1-2 tips, suitable for a voice assistant to read aloud in 15-20 seconds."
     },
     swelling: {
       type: Type.OBJECT,
@@ -42,7 +46,7 @@ const analysisSchema = {
       required: ['observation', 'tips']
     }
   },
-  required: ['overallSummary', 'swelling', 'skin', 'fatigue', 'stress']
+  required: ['overallSummary', 'voiceSummary', 'swelling', 'skin', 'fatigue', 'stress']
 };
 
 
@@ -54,7 +58,7 @@ export const getFaceAnalysis = async (imageBase64: string): Promise<AnalysisResu
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const model = "gemini-2.5-flash";
 
-  const prompt = "You are a friendly and professional AI wellness assistant called 'Morning Radiance'. Analyze the provided photo of a person's face taken in the morning. Based only on visible cues in the image, identify signs related to four categories: Swelling (e.g., puffiness around eyes), Skin Condition (e.g., redness, dryness, blemishes), Fatigue (e.g., dark circles, tired eyes), and Stress (e.g., tense facial muscles, frown lines). For each category, provide a gentle, non-alarming observation and 2-3 simple, actionable wellness tips. Also provide a positive and encouraging overall summary. Your response must be in JSON format according to the provided schema. Do not provide any medical diagnosis or advice. Frame all suggestions as general wellness tips.";
+  const prompt = "You are a friendly and professional AI wellness assistant called 'Morning Radiance'. Analyze the provided photo of a person's face taken in the morning. Based only on visible cues in the image, identify signs related to four categories: Swelling (e.g., puffiness around eyes), Skin Condition (e.g., redness, dryness, blemishes), Fatigue (e.g., dark circles, tired eyes), and Stress (e.g., tense facial muscles, frown lines). For each category, provide a gentle, non-alarming observation and 2-3 simple, actionable wellness tips. Also provide a positive and encouraging overall summary and a very brief voice summary (15-20 seconds) of the key points. Your response must be in JSON format according to the provided schema. Do not provide any medical diagnosis or advice. Frame all suggestions as general wellness tips.";
 
   const imagePart = {
     inlineData: {
@@ -84,5 +88,37 @@ export const getFaceAnalysis = async (imageBase64: string): Promise<AnalysisResu
   } catch (error) {
     console.error("Error calling Gemini API:", error);
     throw new Error("Failed to get analysis from AI. The model may be unable to process the request.");
+  }
+};
+
+
+export const getVoiceSummary = async (text: string): Promise<string> => {
+  if (!process.env.API_KEY) {
+    throw new Error("API_KEY environment variable is not set.");
+  }
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash-preview-tts",
+      contents: [{ parts: [{ text: text }] }],
+      config: {
+        responseModalities: [Modality.AUDIO],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName: 'Kore' },
+          },
+        },
+      },
+    });
+
+    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (!base64Audio) {
+      throw new Error("No audio data received from the API.");
+    }
+    return base64Audio;
+  } catch (error) {
+    console.error("Error calling Gemini TTS API:", error);
+    throw new Error("Failed to generate voice summary.");
   }
 };
