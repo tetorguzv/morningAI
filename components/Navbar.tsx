@@ -7,10 +7,6 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ isAuthenticated, onLogout, onLogoClick }) => {
-  const handleHelloClick = () => {
-    alert('Hello there!');
-  };
-
   return (
     <header className="w-full p-4 bg-black/30 backdrop-blur-lg border-b border-gray-800 sticky top-0 z-50">
       <nav className="max-w-7xl mx-auto flex justify-between items-center">
@@ -23,13 +19,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated, onLogout, onLogoClick 
           </div>
           <span className="text-xl font-bold text-white">Radiance</span>
         </div>
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={handleHelloClick}
-            className="px-4 py-2 text-sm text-gray-300 font-semibold border border-gray-700 rounded-lg hover:bg-gray-800 hover:text-white transition-colors duration-200"
-          >
-            Hello
-          </button>
+        <div>
           {isAuthenticated && (
             <button
               onClick={onLogout}
